@@ -3,7 +3,15 @@
 // MIS Shop - Logout Handler
 // ============================================================
 
+require_once __DIR__ . '/includes/db.php';
 require_once __DIR__ . '/includes/auth.php';
+
+// Clear remember token from DB and cookie
+if (isset($_COOKIE['remember_token'])) {
+    $token = mysqli_real_escape_string($conn, $_COOKIE['remember_token']);
+    mysqli_query($conn, "DELETE FROM remember_tokens WHERE token = '$token'");
+    setcookie('remember_token', '', time() - 42000, '/', '', false, true);
+}
 
 // Unset all sessions
 $_SESSION = [];

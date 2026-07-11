@@ -33,6 +33,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $_SESSION['user_id'] = $user['id'];
             $_SESSION['username'] = $user['username'];
             $_SESSION['email'] = $user['email'];
+            $_SESSION['role'] = $user['role'];
+
+            // Remember Me - set cookie
+            if (isset($_POST['remember'])) {
+                $token = bin2hex(random_bytes(32));
+                $expires = date('Y-m-d H:i:s', strtotime('+20 days'));
+                $token_esc = mysqli_real_escape_string($conn, $token);
+                mysqli_query($conn, "DELETE FROM remember_tokens WHERE user_id = " . $user['id']);
+                mysqli_query($conn, "INSERT INTO remember_tokens (user_id, token, expires_at) VALUES (" . $user['id'] . ", '$token_esc', '$expires')");
+                setcookie('remember_token', $token, time() + 86400 * 20, '/', '', false, true);
+            }
 
             // Merge temporary session cart to database cart
             if (isset($_SESSION['temp_cart']) && !empty($_SESSION['temp_cart'])) {
@@ -99,6 +110,12 @@ require_once __DIR__ . '/includes/header.php';
                 </div>
                 <input type="password" id="password" name="password" required
                     class="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm">
+            </div>
+
+            <div class="flex items-center gap-2">
+                <input type="checkbox" id="remember" name="remember"
+                    class="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer">
+                <label for="remember" class="text-sm text-slate-600 dark:text-slate-400 cursor-pointer select-none">Remember me for 30 days</label>
             </div>
 
             <button type="submit"

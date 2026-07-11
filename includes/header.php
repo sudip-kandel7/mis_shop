@@ -39,21 +39,21 @@ if (isLoggedIn()) {
 
     <!-- Tailwind Configuration -->
     <script>
-    tailwind.config = {
-        darkMode: 'class',
-        theme: {
-            extend: {
-                fontFamily: {
-                    display: ['Outfit', 'sans-serif'],
-                    sans: ['Inter', 'sans-serif'],
-                },
-                colors: {
-                    'brand-primary': '#6366f1',
-                    'brand-secondary': '#4f46e5',
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        display: ['Outfit', 'sans-serif'],
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        'brand-primary': '#6366f1',
+                        'brand-secondary': '#4f46e5',
+                    }
                 }
             }
         }
-    }
     </script>
 
     <!-- Custom Style Sheet -->
@@ -108,93 +108,95 @@ if (isLoggedIn()) {
                     </button>
 
                     <!-- Cart Link -->
-                    <a href="cart.php"
-                        class="relative p-2 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-                        title="Shopping Cart">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round"
-                                d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z">
-                            </path>
-                        </svg>
-                        <?php if ($cartCount > 0): ?>
-                        <span
-                            class="absolute -top-1 -right-1 w-5 h-5 bg-rose-500 text-white rounded-full flex items-center justify-center text-[10px] font-extrabold shadow-sm animate-pulse">
-                            <?php echo $cartCount; ?>
-                        </span>
-                        <?php endif; ?>
-                    </a>
+                    <?php if (!isOwner()): ?>
+                        <a href="cart.php"
+                            class="relative p-2 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                            title="Shopping Cart">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z">
+                                </path>
+                            </svg>
+                            <?php if ($cartCount > 0): ?>
+                                <span
+                                    class="absolute -top-1 -right-1 w-5 h-5 bg-rose-500 text-white rounded-full flex items-center justify-center text-[10px] font-extrabold shadow-sm animate-pulse">
+                                    <?php echo $cartCount; ?>
+                                </span>
+                            <?php endif; ?>
+                        </a>
+                    <?php endif; ?>
 
                     <!-- Account / Admin Links -->
                     <div class="h-6 w-px bg-slate-200 dark:bg-slate-800 mx-1"></div>
 
                     <?php if (isLoggedIn()): ?>
-                    <!-- Logged In User Links -->
-                    <div class="relative group">
-                        <button
-                            class="flex items-center gap-1.5 p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors focus:outline-none">
+                        <!-- Logged In User Links -->
+                        <div class="relative group">
+                            <button
+                                class="flex items-center gap-1.5 p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors focus:outline-none">
+                                <div
+                                    class="w-7 h-7 rounded-full bg-gradient-to-tr from-indigo-400 to-purple-500 flex items-center justify-center text-white text-xs font-bold font-display shadow-sm">
+                                    <?php echo strtoupper(substr($_SESSION['username'], 0, 2)); ?>
+                                </div>
+                                <span class="hidden lg:inline text-sm font-medium text-slate-700 dark:text-slate-300">
+                                    <?php echo htmlspecialchars($_SESSION['username']); ?>
+                                </span>
+                                <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" stroke-width="2"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"></path>
+                                </svg>
+                            </button>
+                            <!-- Dropdown Menu -->
                             <div
-                                class="w-7 h-7 rounded-full bg-gradient-to-tr from-indigo-400 to-purple-500 flex items-center justify-center text-white text-xs font-bold font-display shadow-sm">
-                                <?php echo strtoupper(substr($_SESSION['username'], 0, 2)); ?>
-                            </div>
-                            <span class="hidden lg:inline text-sm font-medium text-slate-700 dark:text-slate-300">
-                                <?php echo htmlspecialchars($_SESSION['username']); ?>
-                            </span>
-                            <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" stroke-width="2"
-                                viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"></path>
-                            </svg>
-                        </button>
-                        <!-- Dropdown Menu -->
-                        <div
-                            class="absolute right-0 mt-2 w-48 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800/80 shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 py-1.5 z-50">
-                            <?php  if ($_SESSION['role'] != 'owner'): ?>
-                            <a href="orders.php"
-                                class="flex items-center gap-2 px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
-                                <svg class="w-[23px] h-[23px]" fill="none" stroke="currentColor" stroke-width="2"
-                                    viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                        d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01">
-                                    </path>
-                                </svg>
-                                My Orders
-                            </a>
-                            <?php endif; ?>
-                            <?php if (isAdminLoggedIn()): ?>
-                            <a href="admin/index.php"
-                                class="flex items-center gap-2 px-4 py-2 text-sm text-indigo-600 dark:text-indigo-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors font-semibold">
-                                <svg class="w-[23px] h-[23px]" fill="none" stroke="currentColor" stroke-width="2"
-                                    viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2。
+                                class="absolute right-0 mt-2 w-48 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800/80 shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 py-1.5 z-50">
+                                <?php if ($_SESSION['role'] != 'owner'): ?>
+                                    <a href="orders.php"
+                                        class="flex items-center gap-2 px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                                        <svg class="w-[23px] h-[23px]" fill="none" stroke="currentColor" stroke-width="2"
+                                            viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01">
+                                            </path>
+                                        </svg>
+                                        My Orders
+                                    </a>
+                                <?php endif; ?>
+                                <?php if (isAdminLoggedIn()): ?>
+                                    <a href="admin/index.php"
+                                        class="flex items-center gap-2 px-4 py-2 text-sm text-indigo-600 dark:text-indigo-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors font-semibold">
+                                        <svg class="w-[23px] h-[23px]" fill="none" stroke="currentColor" stroke-width="2"
+                                            viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2。
                                         d=" M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                                </svg>
-                                Admin Panel
+                                        </svg>
+                                        Admin Panel
+                                    </a>
+                                <?php endif; ?>
+                                <hr class="border-slate-200 dark:border-slate-800 my-1">
+                                <a href="logout.php"
+                                    class="flex items-center gap-2 px-4 py-2 text-sm text-rose-600 dark:text-rose-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                                    <svg class="w-[23px] h-[23px]" fill="none" stroke="currentColor" stroke-width="2"
+                                        viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                            d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1">
+                                        </path>
+                                    </svg>
+                                    Logout
+                                </a>
+                            </div>
+                        </div>
+                    <?php else: ?>
+                        <!-- Logged Out User Options -->
+                        <div class="flex items-center gap-2">
+                            <a href="login.php"
+                                class="text-sm font-semibold text-slate-700 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 px-3 py-2 rounded-lg transition-colors">
+                                Login
                             </a>
-                            <?php endif; ?>
-                            <hr class="border-slate-200 dark:border-slate-800 my-1">
-                            <a href="logout.php"
-                                class="flex items-center gap-2 px-4 py-2 text-sm text-rose-600 dark:text-rose-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
-                                <svg class="w-[23px] h-[23px]" fill="none" stroke="currentColor" stroke-width="2"
-                                    viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                        d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1">
-                                    </path>
-                                </svg>
-                                Logout
+                            <a href="register.php"
+                                class="text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-500 dark:bg-indigo-500 dark:hover:bg-indigo-600 px-4 py-2 rounded-xl transition-all shadow-md shadow-indigo-500/10 hover:shadow-indigo-500/20 active:scale-[0.98]">
+                                Register
                             </a>
                         </div>
-                    </div>
-                    <?php else: ?>
-                    <!-- Logged Out User Options -->
-                    <div class="flex items-center gap-2">
-                        <a href="login.php"
-                            class="text-sm font-semibold text-slate-700 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 px-3 py-2 rounded-lg transition-colors">
-                            Login
-                        </a>
-                        <a href="register.php"
-                            class="text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-500 dark:bg-indigo-500 dark:hover:bg-indigo-600 px-4 py-2 rounded-xl transition-all shadow-md shadow-indigo-500/10 hover:shadow-indigo-500/20 active:scale-[0.98]">
-                            Register
-                        </a>
-                    </div>
                     <?php endif; ?>
                 </nav>
             </div>
@@ -214,38 +216,38 @@ if (isLoggedIn()) {
             $infoMsg = getFlash('info');
 
             if ($successMsg): ?>
-            <div
-                class="toast-message px-4 py-3 rounded-lg shadow-xl flex items-center gap-3 text-sm font-medium border bg-emerald-50/90 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-200 border-emerald-200 dark:border-emerald-800">
-                <svg class="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" stroke-width="2.5"
-                    viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round"
-                        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                </svg>
-                <span><?php echo htmlspecialchars($successMsg); ?></span>
-            </div>
+                <div
+                    class="toast-message px-4 py-3 rounded-lg shadow-xl flex items-center gap-3 text-sm font-medium border bg-emerald-50/90 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-200 border-emerald-200 dark:border-emerald-800">
+                    <svg class="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" stroke-width="2.5"
+                        viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <span><?php echo htmlspecialchars($successMsg); ?></span>
+                </div>
             <?php endif;
 
             if ($errorMsg): ?>
-            <div
-                class="toast-message px-4 py-3 rounded-lg shadow-xl flex items-center gap-3 text-sm font-medium border bg-rose-50/90 dark:bg-rose-950/80 text-rose-800 dark:text-rose-200 border-rose-200 dark:border-rose-800">
-                <svg class="w-5 h-5 text-rose-500" fill="none" stroke="currentColor" stroke-width="2.5"
-                    viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round"
-                        d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                </svg>
-                <span><?php echo htmlspecialchars($errorMsg); ?></span>
-            </div>
+                <div
+                    class="toast-message px-4 py-3 rounded-lg shadow-xl flex items-center gap-3 text-sm font-medium border bg-rose-50/90 dark:bg-rose-950/80 text-rose-800 dark:text-rose-200 border-rose-200 dark:border-rose-800">
+                    <svg class="w-5 h-5 text-rose-500" fill="none" stroke="currentColor" stroke-width="2.5"
+                        viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <span><?php echo htmlspecialchars($errorMsg); ?></span>
+                </div>
             <?php endif;
 
             if ($infoMsg): ?>
-            <div
-                class="toast-message px-4 py-3 rounded-lg shadow-xl flex items-center gap-3 text-sm font-medium border bg-indigo-50/90 dark:bg-indigo-950/80 text-indigo-800 dark:text-indigo-200 border-indigo-200 dark:border-indigo-800">
-                <svg class="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" stroke-width="2.5"
-                    viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round"
-                        d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                </svg>
-                <span><?php echo htmlspecialchars($infoMsg); ?></span>
-            </div>
+                <div
+                    class="toast-message px-4 py-3 rounded-lg shadow-xl flex items-center gap-3 text-sm font-medium border bg-indigo-50/90 dark:bg-indigo-950/80 text-indigo-800 dark:text-indigo-200 border-indigo-200 dark:border-indigo-800">
+                    <svg class="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" stroke-width="2.5"
+                        viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <span><?php echo htmlspecialchars($infoMsg); ?></span>
+                </div>
             <?php endif; ?>
         </div>

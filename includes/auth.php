@@ -4,6 +4,36 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
+// Auto-login from remember me cookie
+function autoLoginFromCookie($conn)
+{
+    if (isLoggedIn()) return;
+
+    $token = $_COOKIE['remember_token'] ?? '';
+    if (empty($token)) return;
+
+    $token = mysqli_real_escape_string($conn, $token);
+    $result = mysqli_query($conn, "SELECT user_id FROM remember_tokens WHERE token = '$token' AND expires_at > NOW()");
+    $row = mysqli_fetch_assoc($result);
+
+    if ($row) {
+        $uid = $row['user_id'];
+        $userResult = mysqli_query($conn, "SELECT * FROM users WHERE id = $uid AND is_banned = 0");
+        $user = mysqli_fetch_assoc($userResult);
+        if ($user) {
+            $_SESSION['user_id'] = $user['id'];
+            $_SESSION['username'] = $user['username'];
+            $_SESSION['email'] = $user['email'];
+            $_SESSION['role'] = $user['role'];
+        }
+    }
+}
+
+// Only run auto-login if db.php has been loaded (connection exists)
+if (isset($conn) && $conn) {
+    autoLoginFromCookie($conn);
+}
+
 /**
  * Check if any user is logged in
  */

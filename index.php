@@ -33,29 +33,42 @@ require_once __DIR__ . '/includes/header.php';
 ?>
 
 <!-- Hero Banner Section -->
-<?php if (empty($searchFilter) && $categoryFilter === 0): ?>
+<?php if (empty($searchFilter) && $categoryFilter === 0):
+    $prodCount = mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) as c FROM products"))['c'];
+    $catCount = mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) as c FROM categories"))['c'];
+?>
     <section
-        class="mb-12 rounded-3xl overflow-hidden bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 text-white shadow-xl shadow-indigo-500/10 relative">
-        <!-- Abstract shape decorations -->
+        class="mb-8 rounded-2xl overflow-hidden bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600 text-white shadow-lg shadow-indigo-500/10 relative">
         <div
-            class="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,1)_0%,transparent_50%)]">
+            class="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_80%_20%,rgba(255,255,255,1)_0%,transparent_50%)]">
         </div>
-        <div class="max-w-4xl mx-auto px-8 py-16 sm:py-20 text-center relative z-10 space-y-6">
-            <span
-                class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md text-xs font-semibold uppercase tracking-wider">
-                ✨ Summer Collections Live
-            </span>
-            <h1 class="font-display font-extrabold text-4xl sm:text-6xl tracking-tight leading-tight">
-                Discover Premium Quality Products
-            </h1>
-            <p class="text-indigo-100 max-w-lg mx-auto text-base sm:text-lg font-light leading-relaxed">
-                Shop the latest trends with super fast delivery, secure checkout, and dedicated 24/7 customer support.
-            </p>
-            <div class="pt-4 flex justify-center gap-4">
+        <div class="relative z-10 px-6 sm:px-10 py-5 sm:py-6 flex items-center justify-between gap-4">
+            <div class="space-y-1 max-w-lg">
+                <span
+                    class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-white/10 backdrop-blur-md text-[9px] font-semibold uppercase tracking-wider">
+                    🔥 New Arrivals
+                </span>
+                <h1 class="font-display font-extrabold text-lg sm:text-2xl tracking-tight">
+                    Discover Premium Products
+                </h1>
+                <p class="text-indigo-100 text-xs sm:text-sm font-light leading-relaxed">
+                    Fast delivery &amp; secure checkout.
+                </p>
                 <a href="#catalog"
-                    class="px-6 py-3 bg-white text-indigo-700 font-semibold rounded-xl hover:shadow-lg hover:scale-105 active:scale-[0.99] transition-all">
-                    Explore Catalog
+                    class="inline-block mt-1.5 px-4 py-1.5 bg-white text-indigo-700 font-semibold rounded-lg hover:shadow-lg hover:scale-105 active:scale-[0.99] transition-all text-xs">
+                    Shop Now &rarr;
                 </a>
+            </div>
+            <div class="hidden sm:flex items-center gap-5 shrink-0">
+                <div class="text-center">
+                    <p class="text-2xl font-black text-white/90"><?php echo $prodCount; ?>+</p>
+                    <p class="text-[9px] text-indigo-200 font-semibold uppercase tracking-wider">Products</p>
+                </div>
+                <div class="w-px h-8 bg-white/20"></div>
+                <div class="text-center">
+                    <p class="text-2xl font-black text-white/90"><?php echo $catCount; ?>+</p>
+                    <p class="text-[9px] text-indigo-200 font-semibold uppercase tracking-wider">Categories</p>
+                </div>
             </div>
         </div>
     </section>
@@ -112,7 +125,7 @@ require_once __DIR__ . '/includes/header.php';
     </a>
     <?php foreach ($categories as $cat): ?>
         <a href="index.php?category=<?php echo $cat['id']; ?><?php echo !empty($searchFilter) ? '&search=' . urlencode($searchFilter) : ''; ?>"
-            class="inline-flex items-center px-4 py-2 rounded-xl text-sm font-semibold transition-all border shrink-0 <?php echo $categoryFilter === $cat['id'] ? 'bg-indigo-600 text-white border-indigo-600 shadow-md shadow-indigo-500/10' : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-700' ?>">
+            class="inline-flex items-center px-4 py-2 rounded-xl text-sm font-semibold transition-all border shrink-0 <?php echo $categoryFilter === (int)$cat['id'] ? 'bg-indigo-600 text-white border-indigo-600 shadow-md shadow-indigo-500/10' : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-700' ?>">
             <?php echo htmlspecialchars($cat['name']); ?>
         </a>
     <?php endforeach; ?>
@@ -147,8 +160,8 @@ require_once __DIR__ . '/includes/header.php';
                 <!-- Product Image -->
                 <a href="product.php?id=<?php echo $product['id']; ?>"
                     class="block aspect-square w-full relative overflow-hidden bg-slate-100 dark:bg-slate-950">
-                    <?php if (!empty($product['image']) && file_exists(__DIR__ . '/uploads/' . $product['image'])): ?>
-                        <img src="uploads/<?php echo htmlspecialchars($product['image']); ?>"
+                    <?php if (!empty($product['image']) && file_exists(__DIR__ . '/img/' . $product['image'])): ?>
+                        <img src="img/<?php echo htmlspecialchars($product['image']); ?>"
                             alt="<?php echo htmlspecialchars($product['name']); ?>"
                             class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
                     <?php else: ?>
@@ -199,28 +212,51 @@ require_once __DIR__ . '/includes/header.php';
                             Rs.<?php echo number_format($product['price'], 2); ?>
                         </span>
 
-                        <?php if ($product['stock'] > 0): ?>
-                            <form action="cart.php?action=add" method="POST" class="inline-block">
-                                <input type="hidden" name="product_id" value="<?php echo $product['id']; ?>">
-                                <input type="hidden" name="quantity" value="1">
-                                <button type="submit"
-                                    class="p-2 rounded-xl bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-600 hover:text-white dark:hover:bg-indigo-500 dark:hover:text-white active:scale-95 transition-all"
-                                    title="Add to Cart">
+                        <?php if (isLoggedIn() && !isOwner()): ?>
+                            <?php if ($product['stock'] > 0): ?>
+                                <div class="flex items-center gap-1.5">
+                                    <form action="cart.php?action=add" method="POST" class="inline-block">
+                                        <input type="hidden" name="product_id" value="<?php echo $product['id']; ?>">
+                                        <input type="hidden" name="quantity" value="1">
+                                        <button type="submit"
+                                            class="p-2 rounded-xl bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-600 hover:text-white dark:hover:bg-indigo-500 dark:hover:text-white active:scale-95 transition-all"
+                                            title="Add to Cart">
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                                            </svg>
+                                        </button>
+                                    </form>
+                                    <form action="buy_now.php" method="POST" class="inline-block">
+                                        <input type="hidden" name="product_id" value="<?php echo $product['id']; ?>">
+                                        <input type="hidden" name="quantity" value="1">
+                                        <button type="submit"
+                                            class="p-2 rounded-xl bg-emerald-50 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-600 hover:text-white dark:hover:bg-emerald-500 dark:hover:text-white active:scale-95 transition-all"
+                                            title="Buy Now">
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                                            </svg>
+                                        </button>
+                                    </form>
+                                </div>
+                            <?php else: ?>
+                                <button disabled
+                                    class="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-600 cursor-not-allowed"
+                                    title="Out of Stock">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"></path>
+                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                            d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636">
+                                        </path>
                                     </svg>
                                 </button>
-                            </form>
-                        <?php else: ?>
-                            <button disabled
-                                class="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-600 cursor-not-allowed"
-                                title="Out of Stock">
+                            <?php endif; ?>
+                        <?php elseif (!isLoggedIn()): ?>
+                            <a href="login.php"
+                                class="p-2 rounded-xl bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-600 hover:text-white dark:hover:bg-indigo-500 dark:hover:text-white active:scale-95 transition-all"
+                                title="Login to Shop">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                        d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636">
-                                    </path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
                                 </svg>
-                            </button>
+                            </a>
                         <?php endif; ?>
                     </div>
                 </div>

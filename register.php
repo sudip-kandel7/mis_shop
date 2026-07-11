@@ -54,8 +54,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $query = "INSERT INTO users (username, email, password) VALUES ('$username_escaped', '$email_escaped', '$hashedPassword_escaped')";
 
                 if (mysqli_query($conn, $query)) {
-                    setFlash('success', 'Registration successful! You can now log in.');
-                    header('Location: login.php');
+                    $newId = mysqli_insert_id($conn);
+                    $_SESSION['user_id'] = $newId;
+                    $_SESSION['username'] = $username;
+                    $_SESSION['email'] = $email;
+                    $_SESSION['role'] = 'customer';
+
+                    // Auto remember me for 20 days
+                    $token = bin2hex(random_bytes(32));
+                    $expires = date('Y-m-d H:i:s', strtotime('+20 days'));
+                    $token_esc = mysqli_real_escape_string($conn, $token);
+                    mysqli_query($conn, "INSERT INTO remember_tokens (user_id, token, expires_at) VALUES ($newId, '$token_esc', '$expires')");
+                    setcookie('remember_token', $token, time() + 86400 * 20, '/', '', false, true);
+
+                    setFlash('success', 'Registration successful! Welcome, ' . $username . '.');
+                    header('Location: index.php');
                     exit;
                 } else {
                     $error = 'An error occurred. Please try again later.';
@@ -88,29 +101,33 @@ require_once __DIR__ . '/includes/header.php';
         <?php endif; ?>
 
         <!-- Form -->
-        <form action="register.php" method="POST" class="space-y-5">
+        <form action="register.php" method="POST" class="space-y-5" id="register-form">
             <div>
                 <label for="username" class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Username</label>
                 <input type="text" id="username" name="username" value="<?php echo htmlspecialchars($username); ?>" required
                     class="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm">
+                <p id="username-msg" class="text-xs mt-1 hidden"></p>
             </div>
 
             <div>
                 <label for="email" class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Email Address</label>
                 <input type="email" id="email" name="email" value="<?php echo htmlspecialchars($email); ?>" required
                     class="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm">
+                <p id="email-msg" class="text-xs mt-1 hidden"></p>
             </div>
 
             <div>
                 <label for="password" class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Password</label>
                 <input type="password" id="password" name="password" required
                     class="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm">
+                <p id="password-msg" class="text-xs mt-1 hidden"></p>
             </div>
 
             <div>
                 <label for="confirm_password" class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Confirm Password</label>
                 <input type="password" id="confirm_password" name="confirm_password" required
                     class="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm">
+                <p id="confirm-msg" class="text-xs mt-1 hidden"></p>
             </div>
 
             <button type="submit"
@@ -118,6 +135,75 @@ require_once __DIR__ . '/includes/header.php';
                 Register
             </button>
         </form>
+
+<script>
+document.getElementById('username').addEventListener('input', function() {
+    var msg = document.getElementById('username-msg');
+    msg.classList.remove('hidden', 'text-rose-500', 'text-emerald-500');
+    if (this.value.length < 3) {
+        msg.className = 'text-xs mt-1 text-rose-500';
+        msg.textContent = 'Username must be at least 3 characters';
+        this.setCustomValidity('Too short');
+    } else if (!/^[a-zA-Z0-9_]+$/.test(this.value)) {
+        msg.className = 'text-xs mt-1 text-rose-500';
+        msg.textContent = 'Letters, numbers and underscore only';
+        this.setCustomValidity('Invalid chars');
+    } else if (this.value.length > 20) {
+        msg.className = 'text-xs mt-1 text-rose-500';
+        msg.textContent = 'Username must be under 20 characters';
+        this.setCustomValidity('Too long');
+    } else {
+        msg.className = 'text-xs mt-1 text-emerald-500';
+        msg.textContent = 'Looks good!';
+        this.setCustomValidity('');
+    }
+});
+document.getElementById('email').addEventListener('input', function() {
+    var msg = document.getElementById('email-msg');
+    msg.classList.remove('hidden', 'text-rose-500', 'text-emerald-500');
+    var re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (this.value.length > 0 && !re.test(this.value)) {
+        msg.className = 'text-xs mt-1 text-rose-500';
+        msg.textContent = 'Enter a valid email address';
+        this.setCustomValidity('Invalid email');
+    } else {
+        msg.className = 'text-xs mt-1 text-emerald-500';
+        msg.textContent = 'Valid email';
+        this.setCustomValidity('');
+    }
+});
+document.getElementById('password').addEventListener('input', function() {
+    var msg = document.getElementById('password-msg');
+    msg.classList.remove('hidden', 'text-rose-500', 'text-emerald-500');
+    if (this.value.length < 6) {
+        msg.className = 'text-xs mt-1 text-rose-500';
+        msg.textContent = 'Password must be at least 6 characters';
+        this.setCustomValidity('Too short');
+    } else {
+        msg.className = 'text-xs mt-1 text-emerald-500';
+        msg.textContent = 'Strong enough';
+        this.setCustomValidity('');
+    }
+    document.getElementById('confirm_password').dispatchEvent(new Event('input'));
+});
+document.getElementById('confirm_password').addEventListener('input', function() {
+    var msg = document.getElementById('confirm-msg');
+    msg.classList.remove('hidden', 'text-rose-500', 'text-emerald-500');
+    var pw = document.getElementById('password').value;
+    if (this.value.length === 0) {
+        msg.className = 'text-xs mt-1 hidden';
+        this.setCustomValidity('');
+    } else if (this.value !== pw) {
+        msg.className = 'text-xs mt-1 text-rose-500';
+        msg.textContent = 'Passwords do not match';
+        this.setCustomValidity('Mismatch');
+    } else {
+        msg.className = 'text-xs mt-1 text-emerald-500';
+        msg.textContent = 'Passwords match';
+        this.setCustomValidity('');
+    }
+});
+</script>
 
         <!-- Redirect -->
         <p class="text-center text-sm text-slate-500 dark:text-slate-400 mt-6">

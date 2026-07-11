@@ -14,12 +14,39 @@ if (!isLoggedIn()) {
     exit;
 }
 
-// Fetch Cart items to verify it's not empty
-$result = mysqli_query($conn, "
+// Get selected items from POST (from cart.php form submission)
+// or from session (buy_now flow)
+$selectedItems = isset($_POST['selected_items']) ? (array)$_POST['selected_items'] : [];
+
+if (empty($selectedItems) && isset($_SESSION['buy_now_product'])) {
+    $selectedItems = [$_SESSION['buy_now_product']];
+    unset($_SESSION['buy_now_product']);
+}
+
+// If no items selected, redirect back
+if (empty($selectedItems)) {
+    setFlash('error', 'Please select at least one item to checkout.');
+    header('Location: cart.php');
+    exit;
+}
+
+// Sanitize selected items
+$selectedItems = array_map('intval', $selectedItems);
+
+// Fetch Cart items to verify they exist and belong to user
+$placeholders = implode(',', array_fill(0, count($selectedItems), '?'));
+$stmt = $conn->prepare("
     SELECT c.quantity, p.id as product_id, p.name, p.price, p.stock 
     FROM cart c 
     JOIN products p ON c.product_id = p.id 
-    WHERE c.user_id = " . $_SESSION['user_id']);
+    WHERE c.user_id = ? AND p.id IN ($placeholders)
+");
+
+// Bind parameters
+$params = array_merge([$_SESSION['user_id']], $selectedItems);
+$stmt->bind_param(str_repeat('i', count($params)), ...$params);
+$stmt->execute();
+$result = $stmt->get_result();
 
 $cartItems = [];
 while ($row = mysqli_fetch_assoc($result)) {
@@ -27,7 +54,7 @@ while ($row = mysqli_fetch_assoc($result)) {
 }
 
 if (empty($cartItems)) {
-    setFlash('error', 'Your shopping cart is empty.');
+    setFlash('error', 'Selected items not found in your cart.');
     header('Location: cart.php');
     exit;
 }
@@ -54,6 +81,10 @@ require_once __DIR__ . '/includes/header.php';
         <!-- Forms (LG: col-span-8) -->
         <div class="lg:col-span-8 space-y-6">
             <form action="place_order.php" method="POST" class="space-y-6">
+                <!-- Pass selected items as hidden inputs -->
+                <?php foreach ($selectedItems as $itemId): ?>
+                    <input type="hidden" name="selected_items[]" value="<?php echo $itemId; ?>">
+                <?php endforeach; ?>
                 <!-- Delivery Info Section -->
                 <div
                     class="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800/80 p-6 sm:p-8 space-y-5">
@@ -110,8 +141,7 @@ require_once __DIR__ . '/includes/header.php';
             <h3 class="font-display font-extrabold text-lg text-slate-800 dark:text-slate-100 tracking-tight">Order
                 Details</h3>
 
-            <div class="divide-y divide-slate-100 dark:divide-slate-800 max-h-60 overflow-y-auto pr-1">
-                <?php foreach ($cartItems as $item): ?>
+            <div class="divide-y divide-slate-100 dark:divide-slate-800 max-h-60 overflow-y-auto pr-1"                <?php foreach ($cartItems as $item): ?>
                     <div class="py-3.5 flex justify-between gap-4 text-xs sm:text-sm">
                         <div class="space-y-0.5">
                             <p class="font-semibold text-slate-800 dark:text-slate-200 line-clamp-1">
@@ -128,7 +158,7 @@ require_once __DIR__ . '/includes/header.php';
                 <div class="flex justify-between text-slate-500">
                     <span>Subtotal</span>
                     <span
-                        class="font-semibold text-slate-800 dark:text-slate-200">$<?php echo number_format($subtotal, 2); ?></span>
+                        class="font-semibold text-slate-800 dark:text-slate-200">Rs.<?php echo number_format($subtotal, 2); ?></span>
                 </div>
                 <div class="flex justify-between text-slate-500">
                     <span>Shipping</span>
@@ -138,7 +168,7 @@ require_once __DIR__ . '/includes/header.php';
                 <div class="flex justify-between font-display text-base">
                     <span class="font-bold text-slate-800 dark:text-slate-100">Grand Total</span>
                     <span
-                        class="font-extrabold text-lg text-indigo-600 dark:text-indigo-400">$<?php echo number_format($subtotal, 2); ?></span>
+                        class="font-extrabold text-lg text-indigo-600 dark:text-indigo-400">Rs.<?php echo number_format($subtotal, 2); ?></span>
                 </div>
             </div>
         </div>
@@ -146,4 +176,21 @@ require_once __DIR__ . '/includes/header.php';
     </div>
 </div>
 
+<script>
+document.getElementById('shipping_name').addEventListener('input', function() {
+    var error = '';
+    if (/\d/.test(this.value)) error = 'Name cannot contain numbers';
+    else if (this.value.trim().length < 2) error = 'Name is too short';
+    this.setCustomValidity(error);
+});
+
+document.getElementById('shipping_phone').addEventListener('input', function() {
+    var clean = this.value.replace(/\D/g, '');
+    var error = '';
+    if (clean.length !== 10) error = 'Phone must be exactly 10 digits';
+    else if (!/^9[87]/.test(clean)) error = 'Phone must start with 98 or 97';
+    else if (/^(\d)\1{7}$/.test(clean.substring(2))) error = 'Pattern like 9800000000 is not allowed';
+    this.setCustomValidity(error);
+});
+</script>
 <?php require_once __DIR__ . '/includes/footer.php'; ?>
